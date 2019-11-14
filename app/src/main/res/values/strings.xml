@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Terra Call Logger</string>
+    <string name="error_caught">Error</string>
+</resources>
