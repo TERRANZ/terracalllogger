@@ -31,11 +31,29 @@ class CallsReceiver : BroadcastReceiver() {
                 startDate = PreferenceManager.getDefaultSharedPreferences(mContext)
                     .getLong("sdate", Date().time)
                 if (prevState == TelephonyManager.CALL_STATE_RINGING) {
-                    saveCallEvent(true, startDate, Date().time - startDate, number)
+                    saveCallEvent(
+                        missed = false,
+                        incoming = true,
+                        startDate = startDate,
+                        length = Date().time - startDate,
+                        number = number
+                    )
                 } else if (prevState == TelephonyManager.CALL_STATE_OFFHOOK) {
-                    saveCallEvent(false, startDate, Date().time - startDate, number)
+                    saveCallEvent(
+                        missed = false,
+                        incoming = false,
+                        startDate = startDate,
+                        length = Date().time - startDate,
+                        number = number
+                    )
                 } else {
-                    saveCallEvent(false, startDate, Date().time - startDate, number)
+                    saveCallEvent(
+                        missed = true,
+                        incoming = false,
+                        startDate = startDate,
+                        length = Date().time - startDate,
+                        number = number
+                    )
                 }
             }
             TelephonyManager.CALL_STATE_RINGING -> {
@@ -57,12 +75,23 @@ class CallsReceiver : BroadcastReceiver() {
         lastState = state
     }
 
-    private fun saveCallEvent(incoming: Boolean, startDate: Long, length: Long, number: String) {
-        val descr = if (incoming) {
-            "Входящий"
+    private fun saveCallEvent(
+        missed: Boolean,
+        incoming: Boolean,
+        startDate: Long,
+        length: Long,
+        number: String
+    ) {
+        var descr = if (incoming) {
+            "входящий"
         } else {
-            "Исходящий"
+            "исходящий"
         }
+
+        if (missed) {
+            descr = "Пропущен $descr"
+        }
+
         val cr = mContext.contentResolver
         val values = ContentValues()
         val calendarId =
