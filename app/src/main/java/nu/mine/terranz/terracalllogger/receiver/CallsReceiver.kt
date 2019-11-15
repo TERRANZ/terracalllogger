@@ -3,10 +3,11 @@ package nu.mine.terranz.terracalllogger.receiver
 import android.content.BroadcastReceiver
 import android.content.ContentValues
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.net.Uri
 import android.preference.PreferenceManager
-import android.provider.CalendarContract.Events
+import android.provider.CalendarContract.Events.*
 import android.provider.Contacts
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -20,13 +21,15 @@ class CallsReceiver : BroadcastReceiver() {
     private var startDate: Long = 0L
     private var number: String = ""
     private var lastState = TelephonyManager.CALL_STATE_IDLE
+    private val CAL_ID = "cal_id"
 
     private fun onCallStateChanged(state: Int) {
         var callState = "UNKNOWN"
         when (state) {
             TelephonyManager.CALL_STATE_IDLE -> {
                 callState = "IDLE"
-                startDate = PreferenceManager.getDefaultSharedPreferences(mContext).getLong("sdate", Date().time)
+                startDate = PreferenceManager.getDefaultSharedPreferences(mContext)
+                    .getLong("sdate", Date().time)
                 if (prevState == TelephonyManager.CALL_STATE_RINGING) {
                     saveCallEvent(true, startDate, Date().time - startDate, number)
                 } else if (prevState == TelephonyManager.CALL_STATE_OFFHOOK) {
@@ -39,13 +42,15 @@ class CallsReceiver : BroadcastReceiver() {
                 callState = "RINGING"
                 prevState = state
                 startDate = Date().time
-                PreferenceManager.getDefaultSharedPreferences(mContext).edit().putLong("sdate", startDate).apply()
+                PreferenceManager.getDefaultSharedPreferences(mContext).edit()
+                    .putLong("sdate", startDate).apply()
             }
             TelephonyManager.CALL_STATE_OFFHOOK -> {
                 callState = "OFFHOOK"
                 prevState = state
                 startDate = Date().time
-                PreferenceManager.getDefaultSharedPreferences(mContext).edit().putLong("sdate", startDate).apply()
+                PreferenceManager.getDefaultSharedPreferences(mContext).edit()
+                    .putLong("sdate", startDate).apply()
             }
         }
         Log.i(">>>Broadcast", "onCallStateChanged $callState")
@@ -60,20 +65,22 @@ class CallsReceiver : BroadcastReceiver() {
         }
         val cr = mContext.contentResolver
         val values = ContentValues()
+        val calendarId =
+            mContext.getSharedPreferences("prefs", MODE_PRIVATE).getLong(CAL_ID, 1L)
 
-        values.put(Events.DTSTART, startDate)
-        values.put(Events.DTEND, startDate + length)
-        values.put(Events.TITLE, "Звонок")
-        values.put(Events.DESCRIPTION, "$descr вызов, номер: $number " + getContactName(number))
-        values.put(Events.CALENDAR_ID, 1)
-        values.put(Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
-        val uri = cr.insert(Events.CONTENT_URI, values)
+        values.put(DTSTART, startDate)
+        values.put(DTEND, startDate + length)
+        values.put(TITLE, "Звонок")
+        values.put(DESCRIPTION, "$descr вызов, номер: $number " + getContactName(number))
+        values.put(CALENDAR_ID, calendarId)
+        values.put(EVENT_TIMEZONE, TimeZone.getDefault().id)
+        cr.insert(CONTENT_URI, values)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         mContext = context
         mIntent = intent
-        if (intent.action.equals("android.intent.action.NEW_OUTGOING_CALL")) {
+        if (intent.action == "android.intent.action.NEW_OUTGOING_CALL") {
             number = intent.extras.getString("android.intent.extra.PHONE_NUMBER", "")
         } else {
             val stateStr = intent.extras?.getString(TelephonyManager.EXTRA_STATE)
@@ -82,12 +89,12 @@ class CallsReceiver : BroadcastReceiver() {
             }
             if (!number.isEmpty()) {
                 var state = 0
-                if (stateStr == TelephonyManager.EXTRA_STATE_IDLE) {
-                    state = TelephonyManager.CALL_STATE_IDLE
-                } else if (stateStr == TelephonyManager.EXTRA_STATE_OFFHOOK) {
-                    state = TelephonyManager.CALL_STATE_OFFHOOK
-                } else if (stateStr == TelephonyManager.EXTRA_STATE_RINGING) {
-                    state = TelephonyManager.CALL_STATE_RINGING
+                when (stateStr) {
+                    TelephonyManager.EXTRA_STATE_IDLE -> state = TelephonyManager.CALL_STATE_IDLE
+                    TelephonyManager.EXTRA_STATE_OFFHOOK -> state =
+                        TelephonyManager.CALL_STATE_OFFHOOK
+                    TelephonyManager.EXTRA_STATE_RINGING -> state =
+                        TelephonyManager.CALL_STATE_RINGING
                 }
 
                 onCallStateChanged(state)
@@ -95,7 +102,7 @@ class CallsReceiver : BroadcastReceiver() {
         }
     }
 
-    fun getContactName(phoneNumber: String): String {
+    private fun getContactName(phoneNumber: String): String {
         val uri: Uri
         var projection: Array<String>
         var mBaseUri = Contacts.Phones.CONTENT_FILTER_URL
