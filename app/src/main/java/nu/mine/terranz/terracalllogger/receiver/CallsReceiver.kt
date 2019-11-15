@@ -67,11 +67,14 @@ class CallsReceiver : BroadcastReceiver() {
         val values = ContentValues()
         val calendarId =
             mContext.getSharedPreferences("prefs", MODE_PRIVATE).getLong(CAL_ID, 1L)
+        val len = length / 1000
+        val descrFull =
+            "$descr вызов, от: $number (" + getContactName(number) + ") длительностью: $len секунд"
 
         values.put(DTSTART, startDate)
         values.put(DTEND, startDate + length)
-        values.put(TITLE, "Звонок")
-        values.put(DESCRIPTION, "$descr вызов, номер: $number " + getContactName(number))
+        values.put(TITLE, "$descr звонок")
+        values.put(DESCRIPTION, descrFull)
         values.put(CALENDAR_ID, calendarId)
         values.put(EVENT_TIMEZONE, TimeZone.getDefault().id)
         cr.insert(CONTENT_URI, values)
