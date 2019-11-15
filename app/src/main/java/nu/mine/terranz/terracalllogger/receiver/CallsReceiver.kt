@@ -49,7 +49,7 @@ class CallsReceiver : BroadcastReceiver() {
                 } else {
                     saveCallEvent(
                         missed = true,
-                        incoming = false,
+                        incoming = true,
                         startDate = startDate,
                         length = Date().time - startDate,
                         number = number
