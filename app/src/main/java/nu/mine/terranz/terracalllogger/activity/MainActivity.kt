@@ -2,11 +2,11 @@ package nu.mine.terranz.terracalllogger.activity
 
 import android.Manifest.permission.*
 import android.app.AlertDialog
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build.VERSION.SDK_INT
 import android.os.Build.VERSION_CODES.M
 import android.os.Bundle
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.provider.CalendarContract
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -35,22 +35,25 @@ class MainActivity : AppCompatActivity() {
         if (SDK_INT >= M)
             checkPermissions()
 
-        val projection = arrayOf(
-            CalendarContract.Calendars._ID,
-            CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
-            CalendarContract.Calendars.CALENDAR_COLOR
-        )
+        try {
+            val projection = arrayOf(
+                CalendarContract.Calendars._ID,
+                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Calendars.CALENDAR_COLOR
+            )
 
-        val cr = contentResolver
-        val uri = CalendarContract.Calendars.CONTENT_URI
-        val cur = cr.query(uri, projection, null, null, null)
-        while (cur!!.moveToNext()) {
-            val id = cur.getLong(0)
-            val name = cur.getString(1)
-            calendarsMap[id] = name
+            val cr = contentResolver
+            val uri = CalendarContract.Calendars.CONTENT_URI
+            val cur = cr.query(uri, projection, null, null, null)
+            while (cur!!.moveToNext()) {
+                val id = cur.getLong(0)
+                val name = cur.getString(1)
+                calendarsMap[id] = name
+            }
+            cur.close()
+        } catch (e: SecurityException) {
+            Log.i(this.javaClass.name, "Get permissions firstly")
         }
-        cur.close()
-
     }
 
     private fun checkPermissions() {
@@ -90,7 +93,7 @@ class MainActivity : AppCompatActivity() {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Выберите календарь")
 
-        val sp = getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val sp = getDefaultSharedPreferences(this)
 
         val selectedCalendar = sp.getLong(CAL_ID, -1L)
 

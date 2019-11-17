@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Terra Call Logger</string>
     <string name="error_caught">Error</string>
+    <string name="in_call">входящий</string>
+    <string name="out_call">исходящий</string>
+    <string name="lost_call">Пропущен</string>
+    <string name="accepted_call">Принят</string>
+    <string name="call">звонок</string>
 </resources>
