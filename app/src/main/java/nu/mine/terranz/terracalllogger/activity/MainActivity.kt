@@ -9,7 +9,7 @@ import android.os.Bundle
 import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.provider.CalendarContract
 import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
+import android.support.v4.content.ContextCompat.checkSelfPermission
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.a_main)
 
         if (SDK_INT >= M)
-            checkPermissions()
+            checkAndRequestPermissions()
 
         try {
             val projection = arrayOf(
@@ -56,25 +56,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkPermissions() {
-        if (isPermissionsGranted() != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions()
-        } else {
-//            activity.toast("Permissions already granted.")
-        }
-    }
-
     private fun isPermissionsGranted(): Int {
         var counter = 0;
         for (permission in list) {
-            counter += ContextCompat.checkSelfPermission(this, permission)
+            counter += checkSelfPermission(this, permission)
         }
         return counter
     }
 
     private fun deniedPermission(): String {
         for (permission in list) {
-            if (ContextCompat.checkSelfPermission(this, permission)
+            if (checkSelfPermission(this, permission)
                 == PackageManager.PERMISSION_DENIED
             ) return permission
         }
@@ -114,4 +106,36 @@ class MainActivity : AppCompatActivity() {
         val dialog = builder.create()
         dialog.show()
     }
+
+
+    private fun checkAndRequestPermissions() {
+        val readCal = checkSelfPermission(this, READ_CALENDAR)
+        val writeCal = checkSelfPermission(this, WRITE_CALENDAR)
+        val processCall = checkSelfPermission(this, PROCESS_OUTGOING_CALLS)
+        val readPhoneState = checkSelfPermission(this, READ_PHONE_STATE)
+        val readCallLog = checkSelfPermission(this, READ_CALL_LOG)
+        val readContacts = checkSelfPermission(this, READ_CONTACTS)
+        val internet = checkSelfPermission(this, INTERNET)
+
+        if (readCal != PackageManager.PERMISSION_GRANTED
+            || writeCal != PackageManager.PERMISSION_GRANTED
+            || processCall != PackageManager.PERMISSION_GRANTED
+            || readPhoneState != PackageManager.PERMISSION_GRANTED
+            || readCallLog != PackageManager.PERMISSION_GRANTED
+            || readContacts != PackageManager.PERMISSION_GRANTED
+            || internet != PackageManager.PERMISSION_GRANTED
+        ) {
+            val perms = arrayOf(
+                READ_CALENDAR,
+                WRITE_CALENDAR,
+                PROCESS_OUTGOING_CALLS,
+                READ_PHONE_STATE,
+                READ_CALL_LOG,
+                READ_CONTACTS,
+                INTERNET
+            )
+            ActivityCompat.requestPermissions(this, perms, 1);
+        }
+    }
+
 }
