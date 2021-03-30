@@ -17,14 +17,6 @@ import nu.mine.terranz.terracalllogger.R
 
 class MainActivity : AppCompatActivity() {
 
-    private var list = listOf(
-        READ_CONTACTS,
-        READ_CALENDAR,
-        WRITE_CALENDAR,
-        PROCESS_OUTGOING_CALLS,
-        READ_PHONE_STATE,
-        READ_CALL_LOG
-    )
     private val calendarsMap = HashMap<Long, String>()
     private val CAL_ID = "cal_id"
 
@@ -53,31 +45,6 @@ class MainActivity : AppCompatActivity() {
             cur.close()
         } catch (e: SecurityException) {
             Log.i(this.javaClass.name, "Get permissions firstly")
-        }
-    }
-
-    private fun isPermissionsGranted(): Int {
-        var counter = 0;
-        for (permission in list) {
-            counter += checkSelfPermission(this, permission)
-        }
-        return counter
-    }
-
-    private fun deniedPermission(): String {
-        for (permission in list) {
-            if (checkSelfPermission(this, permission)
-                == PackageManager.PERMISSION_DENIED
-            ) return permission
-        }
-        return ""
-    }
-
-    private fun requestPermissions() {
-        val permission = deniedPermission()
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
-        } else {
-            ActivityCompat.requestPermissions(this, list.toTypedArray(), 123)
         }
     }
 
